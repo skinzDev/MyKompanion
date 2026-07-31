@@ -196,9 +196,6 @@ function switchTab(tabName) {
   } else if (tabName === 'gallery') {
     document.getElementById('gallerySection').style.display = 'block';
     loadGallery();
-  } else if (tabName === 'plans') {
-    document.getElementById('plansSection').style.display = 'block';
-    loadPlans();
   }
 }
 
@@ -249,9 +246,6 @@ function setupEventListeners() {
 
   const copyWhatsAppBtn = document.getElementById('copyWhatsAppBtn');
   if (copyWhatsAppBtn) copyWhatsAppBtn.addEventListener('click', copyWhatsAppMessage);
-
-  const savePlanToDbBtn = document.getElementById('savePlanToDbBtn');
-  if (savePlanToDbBtn) savePlanToDbBtn.addEventListener('click', savePlanToDb);
 
   document.querySelectorAll('.day-chip').forEach(chip => {
     chip.addEventListener('click', () => {
@@ -387,27 +381,17 @@ function handleFinishProposal() {
     document.getElementById('ticketNoteRow').style.display = 'none';
   }
   showProposalStep(4);
-  savePlanToDb();
 }
-
-let isPlanSaved = false;
 
 function resetProposalFlow() {
   noClickCount = 0;
   selectedDays = [];
   selectedActivities = [];
   customNoteText = '';
-  isPlanSaved = false;
   document.querySelectorAll('.day-chip').forEach(c => c.classList.remove('selected'));
   document.querySelectorAll('.activity-card').forEach(c => c.classList.remove('selected'));
   const noteInput = document.getElementById('customNoteInput');
   if (noteInput) noteInput.value = '';
-  const saveBtn = document.getElementById('savePlanToDbBtn');
-  if (saveBtn) {
-    saveBtn.disabled = false;
-    saveBtn.style.background = '';
-    saveBtn.textContent = '💖 Sačuvaj u našu bazu';
-  }
   document.getElementById('yesBtn').style.transform = 'scale(1)';
   const noBtn = document.getElementById('noBtn');
   noBtn.style.transform = 'none';
@@ -423,73 +407,17 @@ function copyWhatsAppMessage() {
   let msg = `Hej bubabiii!\n\n🗓️ Izabrala sam: ${selectedDays.join(', ')}, tada sam slobodna!\n✨ Aktivnosti: ${selectedActivities.join(', ')}`;
   if (customNoteText.trim()) msg += `\n💌 Želja: ${customNoteText.trim()}`;
   msg += `\n\nJedva čekam da se guzvamo u zagrljaju! 🥰`;
+  
   navigator.clipboard.writeText(msg).then(() => {
     const alertDiv = document.getElementById('savePlanAlert');
-    alertDiv.textContent = 'Poruka je kopirana! Sada mi je posalji... sad... odma';
+    alertDiv.textContent = 'Poruka je kopirana! Otvaram WhatsApp... 💬';
     alertDiv.style.display = 'block';
     setTimeout(() => { alertDiv.style.display = 'none'; }, 4000);
-  });
-}
+  }).catch(() => {});
 
-async function savePlanToDb() {
-  const saveBtn = document.getElementById('savePlanToDbBtn');
-  if (isPlanSaved) {
-    switchTab('plans');
-    return;
-  }
-  if (saveBtn) {
-    saveBtn.disabled = true;
-    saveBtn.textContent = 'Čuvam... ⏳';
-  }
-
-  let savedOk = false;
-  try {
-    const res = await fetch('/api/date-plans', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        selected_days: selectedDays,
-        selected_activities: selectedActivities,
-        custom_note: customNoteText
-      })
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success) savedOk = true;
-    }
-  } catch (err) {}
-
-  // LocalStorage fallback for GitHub Pages
-  try {
-    const newPlan = {
-      id: Date.now(),
-      username: currentUser ? currentUser.username : 'vanja<3',
-      selected_days: selectedDays,
-      selected_activities: selectedActivities,
-      custom_note: customNoteText,
-      created_at: new Date().toISOString()
-    };
-    const localPlans = JSON.parse(localStorage.getItem('cutie_date_plans') || '[]');
-    localPlans.unshift(newPlan);
-    localStorage.setItem('cutie_date_plans', JSON.stringify(localPlans));
-    savedOk = true;
-  } catch (e) {}
-
-  if (savedOk) {
-    isPlanSaved = true;
-    if (saveBtn) {
-      saveBtn.disabled = false;
-      saveBtn.textContent = '💌 Pogledaj u Planovi';
-      saveBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-    }
-    const alertDiv = document.getElementById('savePlanAlert');
-    if (alertDiv) {
-      alertDiv.textContent = 'Plan je sačuvan! Klikni na dugme iznad da otvoriš Planove 💌';
-      alertDiv.style.display = 'block';
-      alertDiv.style.color = '#059669';
-      setTimeout(() => { alertDiv.style.display = 'none'; }, 4000);
-    }
-  }
+  // Directly trigger WhatsApp chat share link
+  const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+  window.open(waUrl, '_blank');
 }
 
 // ==================== GALLERY ====================
@@ -556,49 +484,5 @@ async function loadGallery() {
       startPuzzle(item.image_url, item.filename);
     });
     grid.appendChild(card);
-  });
-}
-
-// ==================== PLANS DASHBOARD ====================
-
-async function loadPlans() {
-  let plans = [];
-  try {
-    const res = await fetch('/api/date-plans');
-    if (res.ok) {
-      const data = await res.json();
-      plans = data.plans || [];
-    }
-  } catch (err) {}
-
-  if (plans.length === 0) {
-    try {
-      plans = JSON.parse(localStorage.getItem('cutie_date_plans') || '[]');
-    } catch(e) {}
-  }
-
-  const list = document.getElementById('plansList');
-  if (!list) return;
-  list.innerHTML = '';
-  if (!plans || plans.length === 0) {
-    list.innerHTML = '<p class="subtitle">Još uvek nema sačuvanih planova za sastanke.</p>';
-    return;
-  }
-  plans.forEach(p => {
-    const card = document.createElement('div');
-    card.className = 'plan-card';
-    const createdDate = new Date(p.created_at).toLocaleString('sr-RS');
-    card.innerHTML = `
-      <div class="plan-header-info">
-        <span>💌 Plan od korisnika: ${p.username}</span>
-        <span style="font-size: 0.85rem; color: #64748b;">${createdDate}</span>
-      </div>
-      <div class="plan-days-badge">🗓️ Izabrani dani: ${p.selected_days.join(', ')}</div>
-      <div class="plan-activities-list">
-        ${p.selected_activities.map(act => `<span class="activity-tag">✨ ${act}</span>`).join('')}
-      </div>
-      ${p.custom_note ? `<p style="font-size: 0.9rem; color: #475569; margin-top: 8px;"><strong>Posebna želja:</strong> "${p.custom_note}"</p>` : ''}
-    `;
-    list.appendChild(card);
   });
 }

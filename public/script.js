@@ -1,28 +1,54 @@
-// Global State
+// ==================== GLOBAL APP STATE ====================
 let currentUser = null;
 let currentTab = 'proposal';
 
-// Proposal Flow State
+// Proposal Form State
 let noClickCount = 0;
-const noMessages = [
-  "Jesi li sigurna? 🥺",
-  "Stvarno? </3",
-  "Zaštooo? 😭",
-  "Nema šanse da kažeš ne! 💖",
-  "Razmisli još jednom! 🥰",
-  "Samo pritisni DA! 🌸",
-  "Nemoj mi slomiti srce! 💔",
-  "Molim teee! 🧸"
-];
 let selectedDays = [];
 let selectedActivities = [];
 let customNoteText = '';
 
-// Audio Synth Helpers (Web Audio API)
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const noMessages = [
+  "Jesi li sigurna? 🥺",
+  "Razmisli još jednom... 💔",
+  "Paaaleeese? 🧸",
+  "Daću ti sve sladolede! 🍦",
+  "Nemoj to da mi radiš... 😭",
+  "Zagrliću te najjače! 🫂",
+  "Nemoguće je reći ne! 💕"
+];
 
+// Fallback users for static GitHub Pages hosting
+const DEFAULT_USERS = {
+  'andrija<3': { id: 1, username: 'andrija<3', display_name: 'Andrija 💙', role: 'boyfriend', pass: 'andrija123' },
+  'vanja<3': { id: 2, username: 'vanja<3', display_name: 'Vanja 💕', role: 'girlfriend', pass: 'lolxdlol123' }
+};
+
+// Hardcoded static images for GitHub Pages hosting fallback
+const STATIC_PUZZLE_IMAGES = [
+  "WhatsApp Image 2026-07-29 at 01.36.48 (1).jpeg",
+  "WhatsApp Image 2026-07-29 at 01.36.48 (2).jpeg",
+  "WhatsApp Image 2026-07-29 at 01.36.48 (3).jpeg",
+  "WhatsApp Image 2026-07-29 at 01.36.48 (4).jpeg",
+  "WhatsApp Image 2026-07-29 at 01.36.48 (5).jpeg",
+  "WhatsApp Image 2026-07-29 at 01.36.48 (6).jpeg",
+  "WhatsApp Image 2026-07-29 at 01.36.48.jpeg",
+  "WhatsApp Image 2026-07-29 at 01.39.19 (1).jpeg",
+  "WhatsApp Image 2026-07-29 at 01.39.19 (10).jpeg",
+  "WhatsApp Image 2026-07-29 at 01.39.19 (2).jpeg",
+  "WhatsApp Image 2026-07-29 at 01.39.19 (3).jpeg",
+  "WhatsApp Image 2026-07-29 at 01.39.19 (4).jpeg",
+  "WhatsApp Image 2026-07-29 at 01.39.19 (5).jpeg",
+  "WhatsApp Image 2026-07-29 at 01.39.19 (6).jpeg",
+  "WhatsApp Image 2026-07-29 at 01.39.19 (7).jpeg",
+  "WhatsApp Image 2026-07-29 at 01.39.19 (8).jpeg",
+  "WhatsApp Image 2026-07-29 at 01.39.19 (9).jpeg",
+  "WhatsApp Image 2026-07-29 at 01.39.19.jpeg"
+];
+
+// Audio Sound Effects (Web Audio API Synthesizer)
 function playPopSound() {
-  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.type = 'sine';
@@ -37,7 +63,7 @@ function playPopSound() {
 }
 
 function playFanfare() {
-  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   const notes = [523.25, 659.25, 783.99, 1046.50];
   notes.forEach((freq, idx) => {
     const osc = audioCtx.createOscillator();
@@ -56,6 +82,7 @@ function playFanfare() {
 // Background Floating Hearts
 function initFloatingHearts() {
   const container = document.getElementById('heartBg');
+  if (!container) return;
   container.innerHTML = '';
   const heartIcons = ['❤️', '💖', '💕', '💗', '🌸', '✨', '🧸'];
   for (let i = 0; i < 22; i++) {
@@ -73,6 +100,7 @@ function initFloatingHearts() {
 // Canvas Confetti Generator
 function triggerConfetti() {
   const canvas = document.getElementById('confettiCanvas');
+  if (!canvas) return;
   const ctx = canvas.getContext('2d');
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -165,13 +193,9 @@ function switchTab(tabName) {
     document.getElementById('proposalSection').style.display = 'block';
   } else if (tabName === 'puzzle') {
     document.getElementById('puzzleSection').style.display = 'block';
-    // Don't auto-load puzzle — user picks from gallery
   } else if (tabName === 'gallery') {
     document.getElementById('gallerySection').style.display = 'block';
     loadGallery();
-  } else if (tabName === 'plans') {
-    document.getElementById('plansSection').style.display = 'block';
-    loadPlans();
   }
 }
 
@@ -185,7 +209,8 @@ function setupEventListeners() {
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
-      await fetch('/api/logout', { method: 'POST' });
+      try { await fetch('/api/logout', { method: 'POST' }); } catch (e) {}
+      localStorage.removeItem('cutie_user');
       showLoginScreen();
     });
   }
@@ -221,9 +246,6 @@ function setupEventListeners() {
 
   const copyWhatsAppBtn = document.getElementById('copyWhatsAppBtn');
   if (copyWhatsAppBtn) copyWhatsAppBtn.addEventListener('click', copyWhatsAppMessage);
-
-  const savePlanToDbBtn = document.getElementById('savePlanToDbBtn');
-  if (savePlanToDbBtn) savePlanToDbBtn.addEventListener('click', savePlanToDb);
 
   document.querySelectorAll('.day-chip').forEach(chip => {
     chip.addEventListener('click', () => {
@@ -267,35 +289,41 @@ function setupEventListeners() {
 // ==================== AUTHENTICATION HANDLERS ====================
 
 async function quickLogin(username, password) {
-  document.getElementById('usernameInput').value = username;
-  document.getElementById('passwordInput').value = password;
-  handleLoginSubmit(new Event('submit'));
-}
-
-async function handleLoginSubmit(e) {
-  if (e) e.preventDefault();
-  const username = document.getElementById('usernameInput').value.trim();
-  const password = document.getElementById('passwordInput').value.trim();
   const errorDiv = document.getElementById('loginError');
   errorDiv.style.display = 'none';
-
   try {
     const res = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
     });
-    const data = await res.json();
-    if (res.ok && data.success) {
-      setUserSession(data.user);
-    } else {
-      errorDiv.textContent = data.error || 'Neuspešna prijava.';
-      errorDiv.style.display = 'block';
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem('cutie_user', JSON.stringify(data.user));
+        setUserSession(data.user);
+        return;
+      }
     }
-  } catch (err) {
-    errorDiv.textContent = 'Greška pri povezivanju sa serverom.';
+  } catch (err) {}
+
+  // GitHub Pages static auth fallback
+  if (DEFAULT_USERS[username] && DEFAULT_USERS[username].pass === password) {
+    const user = { ...DEFAULT_USERS[username] };
+    delete user.pass;
+    localStorage.setItem('cutie_user', JSON.stringify(user));
+    setUserSession(user);
+  } else {
+    errorDiv.textContent = 'Neispravno korisničko ime ili lozinka.';
     errorDiv.style.display = 'block';
   }
+}
+
+async function handleLoginSubmit(e) {
+  e.preventDefault();
+  const username = document.getElementById('usernameInput').value.trim();
+  const password = document.getElementById('passwordInput').value.trim();
+  quickLogin(username, password);
 }
 
 // ==================== PROPOSAL FLOW LOGIC ====================
@@ -324,25 +352,21 @@ function handleNoClick() {
     subtitle.textContent = "Pogledaj kako je tužan... Zar stvarno želiš da kažeš ne? 🥺";
   } else if (noClickCount >= 3) {
     puppyImg.src = '/images/rlySadPuppy.jpg';
-    subtitle.textContent = "Srce mu se slama... Pritisni DA! 💔😭";
+    subtitle.textContent = "Srce mi se slama! Dugme DA rasteeeee! 💖💖💖";
   }
 }
 
 function handleYesClick() {
   playFanfare();
   triggerConfetti();
-  document.getElementById('proposalPuppyImg').src = '/images/clickedYesPuppy.jpg';
-  document.getElementById('proposalTitle').textContent = "Jaaaj! Rekla si DA! 💖🎉";
-  document.getElementById('proposalSubtitle').textContent = "Hvala ti ljubavi! Sada izaberi kada idemo i šta radimo ✨";
-  document.getElementById('proposalBtnContainer').style.display = 'none';
-  setTimeout(() => showProposalStep(2), 1200);
+  showProposalStep(2);
 }
 
-function showProposalStep(stepNumber) {
-  ['proposalStep1','proposalStep2','proposalStep3','proposalStep4'].forEach(id => {
-    document.getElementById(id).style.display = 'none';
-  });
-  document.getElementById(`proposalStep${stepNumber}`).style.display = 'block';
+function showProposalStep(stepNum) {
+  document.getElementById('proposalStep1').style.display = stepNum === 1 ? 'block' : 'none';
+  document.getElementById('proposalStep2').style.display = stepNum === 2 ? 'block' : 'none';
+  document.getElementById('proposalStep3').style.display = stepNum === 3 ? 'block' : 'none';
+  document.getElementById('proposalStep4').style.display = stepNum === 4 ? 'block' : 'none';
 }
 
 function handleFinishProposal() {
@@ -357,27 +381,17 @@ function handleFinishProposal() {
     document.getElementById('ticketNoteRow').style.display = 'none';
   }
   showProposalStep(4);
-  savePlanToDb();
 }
-
-let isPlanSaved = false;
 
 function resetProposalFlow() {
   noClickCount = 0;
   selectedDays = [];
   selectedActivities = [];
   customNoteText = '';
-  isPlanSaved = false;
   document.querySelectorAll('.day-chip').forEach(c => c.classList.remove('selected'));
   document.querySelectorAll('.activity-card').forEach(c => c.classList.remove('selected'));
   const noteInput = document.getElementById('customNoteInput');
   if (noteInput) noteInput.value = '';
-  const saveBtn = document.getElementById('savePlanToDbBtn');
-  if (saveBtn) {
-    saveBtn.disabled = false;
-    saveBtn.style.background = '';
-    saveBtn.textContent = '💖 Sačuvaj u našu bazu';
-  }
   document.getElementById('yesBtn').style.transform = 'scale(1)';
   const noBtn = document.getElementById('noBtn');
   noBtn.style.transform = 'none';
@@ -393,150 +407,82 @@ function copyWhatsAppMessage() {
   let msg = `Hej bubabiii!\n\n🗓️ Izabrala sam: ${selectedDays.join(', ')}, tada sam slobodna!\n✨ Aktivnosti: ${selectedActivities.join(', ')}`;
   if (customNoteText.trim()) msg += `\n💌 Želja: ${customNoteText.trim()}`;
   msg += `\n\nJedva čekam da se guzvamo u zagrljaju! 🥰`;
+  
   navigator.clipboard.writeText(msg).then(() => {
     const alertDiv = document.getElementById('savePlanAlert');
-    alertDiv.textContent = 'Poruka je kopirana! Sada mi je posalji... sad... odma';
+    alertDiv.textContent = 'Poruka je kopirana! Otvaram WhatsApp... 💬';
     alertDiv.style.display = 'block';
     setTimeout(() => { alertDiv.style.display = 'none'; }, 4000);
-  });
-}
+  }).catch(() => {});
 
-async function savePlanToDb() {
-  const saveBtn = document.getElementById('savePlanToDbBtn');
-  if (isPlanSaved) {
-    switchTab('plans');
-    return;
-  }
-  if (saveBtn) {
-    saveBtn.disabled = true;
-    saveBtn.textContent = 'Čuvam... ⏳';
-  }
-  try {
-    const res = await fetch('/api/date-plans', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        selected_days: selectedDays,
-        selected_activities: selectedActivities,
-        custom_note: customNoteText
-      })
-    });
-    const data = await res.json();
-    const alertDiv = document.getElementById('savePlanAlert');
-    if (res.ok && data.success) {
-      isPlanSaved = true;
-      if (saveBtn) {
-        saveBtn.disabled = false;
-        saveBtn.textContent = '💌 Pogledaj u Planovi';
-        saveBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-      }
-      if (alertDiv) {
-        alertDiv.textContent = 'Plan je sačuvan! Klikni na dugme iznad da otvoriš Planove 💌';
-        alertDiv.style.display = 'block';
-        alertDiv.style.color = '#059669';
-        setTimeout(() => { alertDiv.style.display = 'none'; }, 4000);
-      }
-    } else {
-      if (saveBtn) {
-        saveBtn.disabled = false;
-        saveBtn.textContent = '💖 Sačuvaj u našu bazu';
-      }
-      if (alertDiv) {
-        alertDiv.textContent = data.error || 'Greška pri čuvanju u bazi.';
-        alertDiv.style.display = 'block';
-        alertDiv.style.color = '#ef4444';
-      }
-    }
-  } catch (err) {
-    console.error('Error saving plan:', err);
-    if (saveBtn) {
-      saveBtn.disabled = false;
-      saveBtn.textContent = '💖 Sačuvaj u našu bazu';
-    }
-  }
+  // Directly trigger WhatsApp chat share link
+  const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+  window.open(waUrl, '_blank');
 }
 
 // ==================== GALLERY ====================
 
 async function loadGallery() {
+  let allImages = [];
+  let completed = [];
+
   try {
     const res = await fetch('/api/puzzle/gallery');
-    const data = await res.json();
-    const grid = document.getElementById('galleryGrid');
-    grid.innerHTML = '';
-
-    const completedSet = new Set();
-    (data.completed || []).forEach(c => completedSet.add(c.image_filename));
-
-    data.allImages.forEach((item, index) => {
-      const isSolved = completedSet.has(item.filename);
-      const card = document.createElement('div');
-      card.className = 'gallery-item' + (isSolved ? ' solved' : ' locked');
-      card.innerHTML = `
-        <div class="gallery-img-wrapper">
-          <img src="${item.image_url}" alt="Uspomena ${index + 1}" class="gallery-img ${isSolved ? 'unlocked-img' : 'locked-img'}">
-          ${isSolved ? `
-            <span class="solved-badge">✨ Otključano</span>
-          ` : `
-            <div class="lock-overlay">
-              <span class="lock-icon">🔒</span>
-              <span class="play-badge">🧩 Složi slagalicu</span>
-            </div>
-          `}
-        </div>
-        <div class="gallery-caption">
-          Uspomena #${index + 1} ${isSolved ? '💖' : '🔒'}
-        </div>
-      `;
-      // Click to start puzzle with this image
-      card.addEventListener('click', () => {
-        const previewBtn = document.getElementById('togglePreviewBtn');
-        if (previewBtn) previewBtn.style.display = 'inline-block';
-        const previewImg = document.getElementById('previewImage');
-        if (previewImg) previewImg.src = item.image_url;
-        const subtitle = document.getElementById('puzzleSubtitle');
-        if (subtitle) subtitle.textContent = `Uspomena #${index + 1} — složi slagalicu! 🧩`;
-        const workspace = document.getElementById('puzzleWorkspace');
-        if (workspace) workspace.style.display = 'flex';
-        startPuzzle(item.image_url, item.filename);
-      });
-      grid.appendChild(card);
-    });
-  } catch (err) {
-    console.error('Error loading gallery:', err);
-  }
-}
-
-// ==================== PLANS DASHBOARD ====================
-
-async function loadPlans() {
-  try {
-    const res = await fetch('/api/date-plans');
-    const data = await res.json();
-    const list = document.getElementById('plansList');
-    list.innerHTML = '';
-    if (!data.plans || data.plans.length === 0) {
-      list.innerHTML = '<p class="subtitle">Još uvek nema sačuvanih planova za sastanke.</p>';
-      return;
+    if (res.ok) {
+      const data = await res.json();
+      allImages = data.allImages || [];
+      completed = data.completed || [];
     }
-    data.plans.forEach(p => {
-      const card = document.createElement('div');
-      card.className = 'plan-card';
-      const createdDate = new Date(p.created_at).toLocaleString('sr-RS');
-      card.innerHTML = `
-        <div class="plan-header-info">
-          <span>💌 Plan od korisnika: ${p.username}</span>
-          <span style="font-size: 0.85rem; color: #64748b;">${createdDate}</span>
-        </div>
-        <div class="plan-days-badge">🗓️ Izabrani dani: ${p.selected_days.join(', ')}</div>
-        <div class="plan-activities-list">
-          ${p.selected_activities.map(act => `<span class="activity-tag">✨ ${act}</span>`).join('')}
-        </div>
-        ${p.custom_note ? `<p style="font-size: 0.9rem; color: #475569; margin-top: 8px;"><strong>Posebna želja:</strong> "${p.custom_note}"</p>` : ''}
-      `;
-      list.appendChild(card);
-    });
-  } catch (err) {
-    console.error('Error loading plans:', err);
+  } catch (err) {}
+
+  if (allImages.length === 0) {
+    allImages = STATIC_PUZZLE_IMAGES.map(img => ({
+      filename: img,
+      image_url: `imagesForPuzzels/${encodeURIComponent(img)}`
+    }));
   }
+
+  let localCompleted = [];
+  try {
+    localCompleted = JSON.parse(localStorage.getItem('cutie_puzzle_completed') || '[]');
+  } catch(e) {}
+
+  const completedSet = new Set(completed.map(c => c.image_filename).concat(localCompleted));
+  const grid = document.getElementById('galleryGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  allImages.forEach((item, index) => {
+    const isSolved = completedSet.has(item.filename);
+    const card = document.createElement('div');
+    card.className = 'gallery-item' + (isSolved ? ' solved' : ' locked');
+    card.innerHTML = `
+      <div class="gallery-img-wrapper">
+        <img src="${item.image_url}" alt="Uspomena ${index + 1}" class="gallery-img ${isSolved ? 'unlocked-img' : 'locked-img'}">
+        ${isSolved ? `
+          <span class="solved-badge">✨ Otključano</span>
+        ` : `
+          <div class="lock-overlay">
+            <span class="lock-icon">🔒</span>
+            <span class="play-badge">🧩 Složi slagalicu</span>
+          </div>
+        `}
+      </div>
+      <div class="gallery-caption">
+        Uspomena #${index + 1} ${isSolved ? '💖' : '🔒'}
+      </div>
+    `;
+    card.addEventListener('click', () => {
+      const previewBtn = document.getElementById('togglePreviewBtn');
+      if (previewBtn) previewBtn.style.display = 'inline-block';
+      const previewImg = document.getElementById('previewImage');
+      if (previewImg) previewImg.src = item.image_url;
+      const subtitle = document.getElementById('puzzleSubtitle');
+      if (subtitle) subtitle.textContent = `Uspomena #${index + 1} — složi slagalicu! 🧩`;
+      const workspace = document.getElementById('puzzleWorkspace');
+      if (workspace) workspace.style.display = 'flex';
+      startPuzzle(item.image_url, item.filename);
+    });
+    grid.appendChild(card);
+  });
 }

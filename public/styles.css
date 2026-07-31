@@ -75,8 +75,7 @@ body {
 
 /* App Navigation Header */
 .app-header {
-  position: sticky;
-  top: 15px;
+  position: relative;
   z-index: 100;
   max-width: 1000px;
   margin: 15px auto 25px auto;
