@@ -146,31 +146,17 @@ function triggerConfetti() {
 
 document.addEventListener('DOMContentLoaded', () => {
   initFloatingHearts();
-  checkAuth();
+  clearSessionAndShowLogin();
   setupEventListeners();
 });
 
-async function checkAuth() {
+async function clearSessionAndShowLogin() {
   try {
-    const res = await fetch('/api/me');
-    if (res.ok) {
-      const data = await res.json();
-      if (data.authenticated) {
-        setUserSession(data.user);
-        return;
-      }
-    }
+    await fetch('/api/logout', { method: 'POST' });
   } catch (err) {}
-
-  // Fallback for static hosting on GitHub Pages
   try {
-    const savedUser = localStorage.getItem('cutie_user');
-    if (savedUser) {
-      setUserSession(JSON.parse(savedUser));
-      return;
-    }
+    localStorage.removeItem('cutie_user');
   } catch (e) {}
-
   showLoginScreen();
 }
 

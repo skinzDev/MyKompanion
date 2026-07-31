@@ -118,22 +118,18 @@ function triggerConfetti() {
 
 document.addEventListener('DOMContentLoaded', () => {
   initFloatingHearts();
-  checkAuth();
+  clearSessionAndShowLogin();
   setupEventListeners();
 });
 
-async function checkAuth() {
+async function clearSessionAndShowLogin() {
   try {
-    const res = await fetch('/api/me');
-    const data = await res.json();
-    if (data.authenticated) {
-      setUserSession(data.user);
-    } else {
-      showLoginScreen();
-    }
-  } catch (err) {
-    showLoginScreen();
-  }
+    await fetch('/api/logout', { method: 'POST' });
+  } catch (err) {}
+  try {
+    localStorage.removeItem('cutie_user');
+  } catch (e) {}
+  showLoginScreen();
 }
 
 function setUserSession(user) {
