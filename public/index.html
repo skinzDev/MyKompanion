@@ -55,18 +55,14 @@
       </div>
 
       <div class="quick-login-box">
-        <p class="quick-title">Brza prijava u jedan klik: ✨</p>
+        <p class="quick-title">Brza prijava jednim klikom ✨</p>
         <div class="quick-btns">
-          <button type="button" class="btn btn-primary" id="loginAsVanja">
-            👧 Prijavi se kao Vanja 💕
-          </button>
-          <button type="button" class="btn btn-secondary" id="loginAsAndrija">
-            👦 Prijavi se kao Andrija 💙
-          </button>
+          <button id="loginAsVanja" type="button" class="btn btn-secondary">Prijava kao Vanja 💕</button>
+          <button id="loginAsAndrija" type="button" class="btn btn-secondary">Prijava kao Andrija 💙</button>
         </div>
       </div>
 
-      <div class="divider"><span>ili unesite podatke</span></div>
+      <div class="divider"><span>ili unesi podatke</span></div>
 
       <form id="loginForm" class="login-form">
         <div class="form-group">
@@ -90,8 +86,8 @@
         <div class="proposal-media">
           <img id="proposalPuppyImg" src="/images/firstPuppy.jpg" alt="Puppy proposal" class="main-puppy-img">
         </div>
-        <h2 id="proposalTitle" class="romantic-heading">Da li želiš da izađeš sa mnom? 💕</h2>
-        <p id="proposalSubtitle" class="proposal-desc">Obećavam najbolji provod i najslađi osmeh! ✨</p>
+        <h2 id="proposalTitle" class="romantic-heading">Da li želiš da izađeš sa mnom?</h2>
+        <p id="proposalSubtitle" class="proposal-desc">Obećavam najbolji provod i najslađi osmeh!</p>
 
         <div class="proposal-buttons-container" id="proposalBtnContainer">
           <button id="yesBtn" class="btn btn-yes">Da! 💖</button>
@@ -212,7 +208,7 @@
         </div>
 
         <div class="final-actions">
-          <button id="copyWhatsAppBtn" class="btn btn-submit">📲 Kopiraj plan za WhatsApp</button>
+          <button id="copyWhatsAppBtn" class="btn btn-submit">Kopiraj plan za WhatsApp</button>
           <button id="savePlanToDbBtn" class="btn btn-primary">💖 Sačuvaj u našu bazu</button>
           <button id="resetProposalBtn" class="btn btn-secondary">Izmeni izbor 🔄</button>
         </div>
@@ -221,49 +217,43 @@
 
     </section>
 
-    <!-- ==================== DAILY PUZZLE GAME SECTION ==================== -->
+    <!-- ==================== PUZZLE GAME SECTION ==================== -->
     <section id="puzzleSection" class="app-section" style="display: none;">
       <div class="card glass-card puzzle-container-card">
         <div class="puzzle-header">
-          <h2 class="romantic-heading">Dnevna Slagalica Uspomena 🧩❤️</h2>
-          <p class="subtitle" id="puzzleDateText">Svakog dana nova slika naših uspomena!</p>
+          <h2 class="romantic-heading">Slagalica 🧩❤️</h2>
+          <p class="subtitle" id="puzzleSubtitle">Izaberi sliku u "Uspomene" tabu da počneš! 📸</p>
         </div>
 
         <div class="puzzle-controls-bar">
-          <div class="stat-badge">⏱️ Vreme: <span id="puzzleTimer">00:00</span></div>
+          <div class="stat-badge">⏱️ <span id="puzzleTimer">00:00</span></div>
           <div class="stat-badge">🔀 Potezi: <span id="puzzleMoves">0</span></div>
-          <div class="stat-badge">
-            Nivo:
-            <select id="gridSizeSelect" class="grid-select">
-              <option value="3" selected>3 x 3 (Lakše)</option>
-              <option value="4">4 x 4 (Za majstore)</option>
-            </select>
-          </div>
+          <div class="stat-badge">✅ <span id="puzzlePlaced">0/64</span></div>
+          <button id="togglePreviewBtn" class="btn btn-secondary btn-sm" style="display:none;">👁️ Slika</button>
         </div>
 
-        <!-- Puzzle Board Container -->
-        <div class="puzzle-board-wrapper">
-          <div id="puzzleBoard" class="puzzle-board"></div>
-
-          <!-- Image Preview Modal Overlay -->
-          <div id="previewOverlay" class="preview-overlay" style="display: none;">
-            <img id="previewImage" src="" alt="Preview uspomene">
+        <!-- Puzzle workspace: Board LEFT, Tray RIGHT -->
+        <div class="puzzle-workspace" id="puzzleWorkspace" style="display:none;">
+          <div class="pz-board-wrap">
+            <div id="puzzleBoard" class="pz-board"></div>
+            <div id="previewOverlay" class="preview-overlay" style="display: none;">
+              <img id="previewImage" src="" alt="Preview">
+            </div>
           </div>
-        </div>
-
-        <div class="puzzle-buttons">
-          <button id="togglePreviewBtn" class="btn btn-secondary">👁️ Prikaži originalnu sliku</button>
-          <button id="shufflePuzzleBtn" class="btn btn-primary">🔀 Pomešaj ponovo</button>
-          <button id="autoSolveBtn" class="btn btn-outline" style="opacity: 0.7;">✨ Reši automatski (Demo)</button>
+          <div class="pz-tray-wrap">
+            <div class="tray-title">🧩 Delovi</div>
+            <div id="puzzleTray" class="pz-tray"></div>
+          </div>
         </div>
 
         <!-- Victory Banner -->
         <div id="puzzleVictoryBanner" class="victory-banner" style="display: none;">
           <div class="victory-content">
             <span class="victory-emoji">🎉</span>
-            <h3>Bravo ljubavi! Rešila si današnju slagalicu! ❤️</h3>
+            <h3>Bravo bubabiii! ❤️</h3>
             <p id="victoryStatsText">Vreme: 00:00 | Potezi: 0</p>
-            <p class="victory-quote">"Nova uspomena je otključana u tvojoj galeriji!" 📸✨</p>
+            <p class="victory-quote">"Uspomena je otključana u galeriji!" 📸✨</p>
+            <button class="btn btn-primary" onclick="switchTab('gallery')">Pogledaj Uspomene 📸</button>
           </div>
         </div>
       </div>
@@ -273,10 +263,9 @@
     <section id="gallerySection" class="app-section" style="display: none;">
       <div class="card glass-card gallery-container-card">
         <div class="gallery-header">
-          <h2 class="romantic-heading">Naša Galerija Uspomena 📸❤️</h2>
-          <p class="subtitle">Sve sačuvane slike iz slagalica na jednom mestu!</p>
+          <h2 class="romantic-heading">Naše Uspomene 📸</h2>
+          <p class="subtitle">Klikni na sliku da započneš slagalicu! 🧩</p>
         </div>
-
         <div id="galleryGrid" class="gallery-grid">
           <!-- Dynamically populated -->
         </div>
@@ -287,7 +276,7 @@
     <section id="plansSection" class="app-section" style="display: none;">
       <div class="card glass-card plans-container-card">
         <div class="plans-header">
-          <h2 class="romantic-heading">Sačuvani Planovi za Sastanke 💌</h2>
+          <h2 class="romantic-heading">Sačuvani Date Planovi</h2>
           <p class="subtitle">Pregled svih izabranih sastanaka i želja:</p>
         </div>
 
@@ -300,6 +289,7 @@
   </main>
 
   <script src="script.js"></script>
+  <script src="puzzle.js"></script>
 </body>
 
 </html>

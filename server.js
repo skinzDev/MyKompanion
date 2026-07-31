@@ -76,12 +76,16 @@ function initUsers() {
   ];
 
   if (DatabaseSync && db) {
-    const insertStmt = db.prepare(`
-      INSERT OR IGNORE INTO users (username, password, display_name, role)
+    const upsertStmt = db.prepare(`
+      INSERT INTO users (username, password, display_name, role)
       VALUES (?, ?, ?, ?)
+      ON CONFLICT(username) DO UPDATE SET
+        password = excluded.password,
+        display_name = excluded.display_name,
+        role = excluded.role
     `);
     for (const u of defaultUsers) {
-      insertStmt.run(u.username, u.password, u.display_name, u.role);
+      upsertStmt.run(u.username, u.password, u.display_name, u.role);
     }
   }
 }
@@ -99,7 +103,9 @@ function getAuthenticatedUser(req) {
 // ==================== AUTH ROUTES ====================
 
 app.post('/api/login', (req, res) => {
-  const { username, password } = req.body;
+  const username = (req.body.username || '').trim();
+  const password = (req.body.password || '').trim();
+
   if (!username || !password) {
     return res.status(400).json({ error: 'Molimo unesite korisničko ime i lozinku.' });
   }
@@ -108,11 +114,14 @@ app.post('/api/login', (req, res) => {
   if (DatabaseSync && db) {
     const stmt = db.prepare('SELECT id, username, password, display_name, role FROM users WHERE username = ?');
     user = stmt.get(username);
-  } else {
+  }
+
+  // Fallback if not found in SQLite DB or if db is disabled
+  if (!user) {
     if (username === 'andrija<3' && password === 'andrija123') {
-      user = { id: 1, username: 'andrija<3', display_name: 'Andrija 💙', role: 'boyfriend' };
+      user = { id: 1, username: 'andrija<3', password: 'andrija123', display_name: 'Andrija 💙', role: 'boyfriend' };
     } else if (username === 'vanja<3' && password === 'lolxdlol123') {
-      user = { id: 2, username: 'vanja<3', display_name: 'Vanja 💕', role: 'girlfriend' };
+      user = { id: 2, username: 'vanja<3', password: 'lolxdlol123', display_name: 'Vanja 💕', role: 'girlfriend' };
     }
   }
 
@@ -197,75 +206,43 @@ function getPuzzleImages() {
   }
 }
 
-app.get('/api/puzzle/today', (req, res) => {
+// Save puzzle completion
+app.post('/api/puzzle/complete', (req, res) => {
   const user = getAuthenticatedUser(req);
   if (!user) return res.status(401).json({ error: 'Morate biti prijavljeni.' });
 
-  const images = getPuzzleImages();
-  if (images.length === 0) {
-    return res.status(404).json({ error: 'Nema slika za slagalicu.' });
-  }
+  const { image_filename, moves, time_seconds } = req.body;
+  if (!image_filename) return res.status(400).json({ error: 'Nedostaje naziv slike.' });
 
-  // Today's date string format YYYY-MM-DD
-  const todayStr = new Date().toISOString().split('T')[0];
-  
-  // Deterministic daily index based on date string
-  let hash = 0;
-  for (let i = 0; i < todayStr.length; i++) {
-    hash = todayStr.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const imageIndex = Math.abs(hash) % images.length;
-  const todayImage = images[imageIndex];
-
-  let progress = null;
   if (DatabaseSync && db) {
-    const stmt = db.prepare(`
-      SELECT * FROM puzzle_progress WHERE user_id = ? AND puzzle_date = ?
+    // Create table if not exists (idempotent)
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS puzzle_completed (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        image_filename TEXT NOT NULL,
+        moves INTEGER DEFAULT 0,
+        time_seconds INTEGER DEFAULT 0,
+        completed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, image_filename)
+      );
     `);
-    const row = stmt.get(user.id, todayStr);
-    if (row) {
-      progress = {
-        ...row,
-        tiles: JSON.parse(row.tiles || '[]'),
-        is_completed: Boolean(row.is_completed)
-      };
-    }
-  }
 
-  res.json({
-    date: todayStr,
-    image_filename: todayImage,
-    image_url: `/imagesForPuzzels/${encodeURIComponent(todayImage)}`,
-    progress
-  });
-});
-
-app.post('/api/puzzle/save', (req, res) => {
-  const user = getAuthenticatedUser(req);
-  if (!user) return res.status(401).json({ error: 'Morate biti prijavljeni.' });
-
-  const { puzzle_date, image_filename, grid_size, tiles, is_completed, moves, time_seconds } = req.body;
-  const tilesJson = JSON.stringify(tiles || []);
-  const completedInt = is_completed ? 1 : 0;
-  const completedAt = is_completed ? new Date().toISOString() : null;
-
-  if (DatabaseSync && db) {
     const stmt = db.prepare(`
-      INSERT INTO puzzle_progress (user_id, puzzle_date, image_filename, grid_size, tiles, is_completed, moves, time_seconds, completed_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(user_id, puzzle_date) DO UPDATE SET
-        tiles = excluded.tiles,
-        is_completed = excluded.is_completed,
+      INSERT INTO puzzle_completed (user_id, image_filename, moves, time_seconds)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(user_id, image_filename) DO UPDATE SET
         moves = excluded.moves,
         time_seconds = excluded.time_seconds,
-        completed_at = COALESCE(excluded.completed_at, puzzle_progress.completed_at)
+        completed_at = CURRENT_TIMESTAMP
     `);
-    stmt.run(user.id, puzzle_date, image_filename, grid_size || 3, tilesJson, completedInt, moves || 0, time_seconds || 0, completedAt);
+    stmt.run(user.id, image_filename, moves || 0, time_seconds || 0);
   }
 
   res.json({ success: true });
 });
 
+// Gallery: list all images + which ones are completed
 app.get('/api/puzzle/gallery', (req, res) => {
   const user = getAuthenticatedUser(req);
   if (!user) return res.status(401).json({ error: 'Morate biti prijavljeni.' });
@@ -275,17 +252,22 @@ app.get('/api/puzzle/gallery', (req, res) => {
     image_url: `/imagesForPuzzels/${encodeURIComponent(img)}`
   }));
 
-  let completedDates = [];
+  let completed = [];
   if (DatabaseSync && db) {
-    const stmt = db.prepare(`
-      SELECT puzzle_date, image_filename, moves, time_seconds, completed_at
-      FROM puzzle_progress WHERE user_id = ? AND is_completed = 1
-      ORDER BY puzzle_date DESC
-    `);
-    completedDates = stmt.all();
+    try {
+      const stmt = db.prepare(`
+        SELECT image_filename, moves, time_seconds, completed_at
+        FROM puzzle_completed WHERE user_id = ?
+        ORDER BY completed_at DESC
+      `);
+      completed = stmt.all(user.id);
+    } catch (err) {
+      // Table might not exist yet
+      completed = [];
+    }
   }
 
-  res.json({ allImages, completedDates });
+  res.json({ allImages, completed });
 });
 
 app.listen(PORT, () => {
