@@ -20,6 +20,7 @@ app.use(cookieParser());
 app.use(cors());
 
 // Static directories
+app.use(express.static(__dirname));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use('/imagesForPuzzels', express.static(path.join(__dirname, 'imagesForPuzzels')));

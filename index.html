@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="sr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Za Moju Cutie Patutije 💕</title>
+
+  <!-- Google Fonts for romantic header & clean typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Outfit:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+  <!-- Floating Hearts Background Container -->
+  <div class="heart-background" id="heartBg"></div>
+
+  <!-- Canvas for Confetti -->
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- Top Navigation Header -->
+  <header class="app-header" id="appHeader" style="display: none;">
+    <div class="header-brand">
+      <span class="heart-icon">💖</span> Ljubab
+    </div>
+    <nav class="nav-links">
+      <button class="nav-btn active" data-tab="proposal">💕 Date</button>
+      <button class="nav-btn" data-tab="gallery">📸 Uspomene</button>
+      <button class="nav-btn" data-tab="plans">💌 Planovi</button>
+    </nav>
+    <div class="user-badge" id="userBadge">
+      <span id="displayName">Korisnik</span>
+      <button id="logoutBtn" class="logout-btn" title="Odjavi se">🚪</button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-content">
+
+    <!-- ==================== LOGIN SECTION ==================== -->
+    <section id="loginSection" class="card glass-card auth-card">
+      <div class="auth-header">
+        <div class="puppy-avatar">
+          <img src="images/firstPuppy.jpg" alt="Slatko kuče" class="puppy-img">
+        </div>
+        <h1 class="romantic-title">Dobrodošli u naš kutak! 💕</h1>
+        <p class="subtitle">Molimo prijavite se kako biste nastavili</p>
+      </div>
+
+      <div class="quick-login-box">
+        <p class="quick-title">Brza prijava jednim klikom ✨</p>
+        <div class="quick-btns">
+          <button id="loginAsVanja" type="button" class="btn btn-secondary">Prijava kao Vanja 💕</button>
+          <button id="loginAsAndrija" type="button" class="btn btn-secondary">Prijava kao Andrija 💙</button>
+        </div>
+      </div>
+
+      <div class="divider"><span>ili unesi podatke</span></div>
+
+      <form id="loginForm" class="login-form">
+        <div class="form-group">
+          <label for="usernameInput">Korisničko ime:</label>
+          <input type="text" id="usernameInput" placeholder="npr. vanja<3" required>
+        </div>
+        <div class="form-group">
+          <label for="passwordInput">Lozinka:</label>
+          <input type="password" id="passwordInput" placeholder="******" required>
+        </div>
+        <div id="loginError" class="error-msg" style="display: none;"></div>
+        <button type="submit" class="btn btn-submit">Prijavi se 💖</button>
+      </form>
+    </section>
+
+    <!-- ==================== PROPOSAL & DATE PLANNER SECTION ==================== -->
+    <section id="proposalSection" class="app-section" style="display: none;">
+
+      <!-- STEP 1: Will you go out with me? -->
+      <div id="proposalStep1" class="card glass-card proposal-card">
+        <div class="proposal-media">
+          <img id="proposalPuppyImg" src="images/firstPuppy.jpg" alt="Puppy proposal" class="main-puppy-img">
+        </div>
+        <h2 id="proposalTitle" class="romantic-heading">Da li želiš da izađeš sa mnom?</h2>
+        <p id="proposalSubtitle" class="proposal-desc">Obećavam najbolji provod i najslađi osmeh!</p>
+
+        <div class="proposal-buttons-container" id="proposalBtnContainer">
+          <button id="yesBtn" class="btn btn-yes">Da! 💖</button>
+          <button id="noBtn" class="btn btn-no">Ne 🥺</button>
+        </div>
+      </div>
+
+      <!-- STEP 2: Pick Available Days -->
+      <div id="proposalStep2" class="card glass-card proposal-card" style="display: none;">
+        <h2 class="romantic-heading">Kada si slobodna za sastanak? 📅✨</h2>
+        <p class="subtitle">Možeš izabrati više dana koji ti odgovaraju:</p>
+
+        <div class="days-grid">
+          <button class="day-chip" data-day="Ponedeljak">Ponedeljak 🌸</button>
+          <button class="day-chip" data-day="Utorak">Utorak 💕</button>
+          <button class="day-chip" data-day="Sreda">Sreda 💖</button>
+          <button class="day-chip" data-day="Četvrtak">Četvrtak 🌷</button>
+          <button class="day-chip" data-day="Petak">Petak 🎉</button>
+          <button class="day-chip" data-day="Subota">Subota 🌟</button>
+          <button class="day-chip" data-day="Nedelja">Nedelja 🧸</button>
+        </div>
+
+        <div class="step-navigation">
+          <button id="goToStep3" class="btn btn-primary" disabled>Nastavi na aktivnosti ➡️</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Pick Date Activities -->
+      <div id="proposalStep3" class="card glass-card proposal-card" style="display: none;">
+        <h2 class="romantic-heading">Šta ćemo raditi? 🍕🍿🚴‍♂️🎨</h2>
+        <p class="subtitle">Izaberi sve aktivnosti koje ti se dopadaju:</p>
+
+        <div class="activities-grid">
+          <div class="activity-card" data-activity="Ukusna hrana / Večera">
+            <span class="activity-icon">🍕</span>
+            <span class="activity-title">Ukusna Hrana / Večera</span>
+            <span class="activity-desc">Pizza, sushi ili romantična večera</span>
+          </div>
+          <div class="activity-card" data-activity="Sport i zabavne aktivnosti">
+            <span class="activity-icon">⚽</span>
+            <span class="activity-title">Sport & Zabava</span>
+            <span class="activity-desc">Kuglanje, mini golff ili aktivnosti</span>
+          </div>
+          <div class="activity-card" data-activity="Romantična šetnja">
+            <span class="activity-icon">🌳</span>
+            <span class="activity-title">Romantična Šetnja</span>
+            <span class="activity-desc">Šetnja parkom i zalazak sunca</span>
+          </div>
+          <div class="activity-card" data-activity="Piknik u parku">
+            <span class="activity-icon">🧺</span>
+            <span class="activity-title">Piknik u Parku</span>
+            <span class="activity-desc">Grickalice, ćebence & društvene igre</span>
+          </div>
+          <div class="activity-card" data-activity="Bioskop & Veče uz filmove">
+            <span class="activity-icon">🎬</span>
+            <span class="activity-title">Bioskop & Filmovi</span>
+            <span class="activity-desc">Kokice i omiljeni filmovi</span>
+          </div>
+          <div class="activity-card" data-activity="Sladoled & Kafa">
+            <span class="activity-icon">🍦</span>
+            <span class="activity-title">Sladoled & Kafa</span>
+            <span class="activity-desc">Slatkiši i opušten razgovor u kafiću</span>
+          </div>
+          <div class="activity-card" data-activity="Slikanje & Radionice">
+            <span class="activity-icon">🎨</span>
+            <span class="activity-title">Slikanje & Umetnost</span>
+            <span class="activity-desc">Pravljenje uspomena i kreativnost</span>
+          </div>
+          <div class="activity-card" data-activity="Posmatranje zvezda">
+            <span class="activity-icon">🌌</span>
+            <span class="activity-title">Posmatranje Zvezda</span>
+            <span class="activity-desc">Noćno nebo i topla čokolada</span>
+          </div>
+        </div>
+
+        <div class="custom-note-group">
+          <label for="customNoteInput">Imas li neku posebnu želju ili ideju? 💌</label>
+          <textarea id="customNoteInput" rows="2"
+            placeholder="Npr. volela bih da pojedemo palačinke poslem..."></textarea>
+        </div>
+
+        <div class="step-navigation">
+          <button id="backToStep2" class="btn btn-secondary">⬅️ Nazad</button>
+          <button id="finishProposal" class="btn btn-submit" disabled>Završi i potvrdi! 💖</button>
+        </div>
+      </div>
+
+      <!-- STEP 4: Celebration & Final Invitation Ticket -->
+      <div id="proposalStep4" class="card glass-card proposal-card" style="display: none;">
+        <div class="celebration-header">
+          <img src="images/yaayScreenPuppy.jpg" alt="Happy puppy" class="yaay-puppy-img">
+          <h2 class="romantic-heading">Jaaaaj! Vidimo se na sastanku! 🎉💖</h2>
+          <p class="subtitle">Zvanična Pozivnica za Naš Sastanak ✨</p>
+        </div>
+
+        <div class="ticket-card">
+          <div class="ticket-header">
+            <span>🎟️ NAŠ ROMANTIČNI SASTANAK</span>
+            <span class="heart-badge">❤️</span>
+          </div>
+          <div class="ticket-body">
+            <div class="ticket-row">
+              <span class="ticket-label">🗓️ Izabrani dani:</span>
+              <span id="ticketDays" class="ticket-value">-</span>
+            </div>
+            <div class="ticket-row">
+              <span class="ticket-label">✨ Aktivnosti:</span>
+              <span id="ticketActivities" class="ticket-value">-</span>
+            </div>
+            <div class="ticket-row" id="ticketNoteRow" style="display: none;">
+              <span class="ticket-label">💌 Posebna poruka:</span>
+              <span id="ticketNote" class="ticket-value">-</span>
+            </div>
+          </div>
+          <div class="ticket-footer">
+            <span>Jedva čekam da te zagrlim! 🥰</span>
+          </div>
+        </div>
+
+        <div class="final-actions">
+          <button id="copyWhatsAppBtn" class="btn btn-submit">Kopiraj plan za WhatsApp</button>
+          <button id="savePlanToDbBtn" class="btn btn-primary">💖 Sačuvaj u našu bazu</button>
+          <button id="resetProposalBtn" class="btn btn-secondary">Izmeni izbor 🔄</button>
+        </div>
+        <div id="savePlanAlert" class="save-alert" style="display: none;"></div>
+      </div>
+
+    </section>
+
+    <!-- ==================== PUZZLE GAME SECTION ==================== -->
+    <section id="puzzleSection" class="app-section" style="display: none;">
+      <div class="card glass-card puzzle-container-card">
+        <div class="puzzle-header">
+          <h2 class="romantic-heading">Slagalica 🧩❤️</h2>
+          <p class="subtitle" id="puzzleSubtitle">Izaberi sliku u "Uspomene" tabu da počneš! 📸</p>
+        </div>
+
+        <div class="puzzle-controls-bar">
+          <button class="btn btn-secondary btn-sm" onclick="switchTab('gallery')">⬅️ Nazad na Uspomene</button>
+          <div class="stat-badge">⏱️ <span id="puzzleTimer">00:00</span></div>
+          <div class="stat-badge">🔀 Potezi: <span id="puzzleMoves">0</span></div>
+          <div class="stat-badge">✅ <span id="puzzlePlaced">0/64</span></div>
+          <button id="togglePreviewBtn" class="btn btn-secondary btn-sm" style="display:none;">👁️ Slika</button>
+        </div>
+
+        <!-- Puzzle workspace: Board LEFT, Tray RIGHT -->
+        <div class="puzzle-workspace" id="puzzleWorkspace" style="display:none;">
+          <div class="pz-board-wrap">
+            <div id="puzzleBoard" class="pz-board"></div>
+            <div id="previewOverlay" class="preview-overlay" style="display: none;">
+              <img id="previewImage" src="" alt="Preview">
+            </div>
+          </div>
+          <div class="pz-tray-wrap">
+            <div class="tray-title">🧩 Delovi</div>
+            <div id="puzzleTray" class="pz-tray"></div>
+          </div>
+        </div>
+
+        <!-- Victory Banner -->
+        <div id="puzzleVictoryBanner" class="victory-banner" style="display: none;">
+          <div class="victory-content">
+            <span class="victory-emoji">🎉</span>
+            <h3>Bravo bubabiii! ❤️</h3>
+            <p id="victoryStatsText">Vreme: 00:00 | Potezi: 0</p>
+            <p class="victory-quote">"Uspomena je otključana u galeriji!" 📸✨</p>
+            <button class="btn btn-primary" onclick="switchTab('gallery')">Pogledaj Uspomene 📸</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== MEMORY GALLERY SECTION ==================== -->
+    <section id="gallerySection" class="app-section" style="display: none;">
+      <div class="card glass-card gallery-container-card">
+        <div class="gallery-header">
+          <h2 class="romantic-heading">Naše Uspomene 📸</h2>
+          <p class="subtitle">Klikni na sliku da započneš slagalicu! 🧩</p>
+        </div>
+        <div id="galleryGrid" class="gallery-grid">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SAVED PLANS DASHBOARD SECTION ==================== -->
+    <section id="plansSection" class="app-section" style="display: none;">
+      <div class="card glass-card plans-container-card">
+        <div class="plans-header">
+          <h2 class="romantic-heading">Sačuvani Date Planovi</h2>
+          <p class="subtitle">Pregled svih izabranih sastanaka i želja:</p>
+        </div>
+
+        <div id="plansList" class="plans-list">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+  <script src="puzzle.js"></script>
+</body>
+
+</html>
