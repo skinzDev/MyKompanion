@@ -154,24 +154,46 @@ app.post('/api/logout', (req, res) => {
 
 // ==================== DATE PLAN ROUTES ====================
 
+function ensureDatePlansTable() {
+  if (DatabaseSync && db) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS date_plans (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        username TEXT NOT NULL,
+        selected_days TEXT NOT NULL,
+        selected_activities TEXT NOT NULL,
+        custom_note TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+  }
+}
+
 app.post('/api/date-plans', (req, res) => {
   const user = getAuthenticatedUser(req);
   if (!user) return res.status(401).json({ error: 'Morate biti prijavljeni.' });
 
-  const { selected_days, selected_activities, custom_note } = req.body;
-  const daysJson = JSON.stringify(selected_days || []);
-  const activitiesJson = JSON.stringify(selected_activities || []);
-  const note = custom_note || '';
+  try {
+    ensureDatePlansTable();
+    const { selected_days, selected_activities, custom_note } = req.body;
+    const daysJson = JSON.stringify(selected_days || []);
+    const activitiesJson = JSON.stringify(selected_activities || []);
+    const note = custom_note || '';
 
-  if (DatabaseSync && db) {
-    const stmt = db.prepare(`
-      INSERT INTO date_plans (user_id, username, selected_days, selected_activities, custom_note)
-      VALUES (?, ?, ?, ?, ?)
-    `);
-    stmt.run(user.id, user.username, daysJson, activitiesJson, note);
+    if (DatabaseSync && db) {
+      const stmt = db.prepare(`
+        INSERT INTO date_plans (user_id, username, selected_days, selected_activities, custom_note)
+        VALUES (?, ?, ?, ?, ?)
+      `);
+      stmt.run(user.id, user.username, daysJson, activitiesJson, note);
+    }
+
+    res.json({ success: true, message: 'Plan sastanka je uspešno sačuvan! 💖' });
+  } catch (err) {
+    console.error('Error saving date plan:', err);
+    res.status(500).json({ error: 'Greška pri čuvanju u bazi.' });
   }
-
-  res.json({ success: true, message: 'Plan sastanka je uspešno sačuvan! 💖' });
 });
 
 app.get('/api/date-plans', (req, res) => {
@@ -179,16 +201,21 @@ app.get('/api/date-plans', (req, res) => {
   if (!user) return res.status(401).json({ error: 'Morate biti prijavljeni.' });
 
   let plans = [];
-  if (DatabaseSync && db) {
-    const stmt = db.prepare(`
-      SELECT id, user_id, username, selected_days, selected_activities, custom_note, created_at
-      FROM date_plans ORDER BY id DESC LIMIT 20
-    `);
-    plans = stmt.all().map(p => ({
-      ...p,
-      selected_days: JSON.parse(p.selected_days || '[]'),
-      selected_activities: JSON.parse(p.selected_activities || '[]')
-    }));
+  try {
+    ensureDatePlansTable();
+    if (DatabaseSync && db) {
+      const stmt = db.prepare(`
+        SELECT id, user_id, username, selected_days, selected_activities, custom_note, created_at
+        FROM date_plans ORDER BY id DESC LIMIT 20
+      `);
+      plans = stmt.all().map(p => ({
+        ...p,
+        selected_days: JSON.parse(p.selected_days || '[]'),
+        selected_activities: JSON.parse(p.selected_activities || '[]')
+      }));
+    }
+  } catch (err) {
+    console.error('Error getting date plans:', err);
   }
   res.json({ plans });
 });

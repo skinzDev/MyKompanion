@@ -364,15 +364,24 @@ function handleFinishProposal() {
   savePlanToDb();
 }
 
+let isPlanSaved = false;
+
 function resetProposalFlow() {
   noClickCount = 0;
   selectedDays = [];
   selectedActivities = [];
   customNoteText = '';
+  isPlanSaved = false;
   document.querySelectorAll('.day-chip').forEach(c => c.classList.remove('selected'));
   document.querySelectorAll('.activity-card').forEach(c => c.classList.remove('selected'));
   const noteInput = document.getElementById('customNoteInput');
   if (noteInput) noteInput.value = '';
+  const saveBtn = document.getElementById('savePlanToDbBtn');
+  if (saveBtn) {
+    saveBtn.disabled = false;
+    saveBtn.style.background = '';
+    saveBtn.textContent = '💖 Sačuvaj u našu bazu';
+  }
   document.getElementById('yesBtn').style.transform = 'scale(1)';
   const noBtn = document.getElementById('noBtn');
   noBtn.style.transform = 'none';
@@ -397,6 +406,15 @@ function copyWhatsAppMessage() {
 }
 
 async function savePlanToDb() {
+  const saveBtn = document.getElementById('savePlanToDbBtn');
+  if (isPlanSaved) {
+    switchTab('plans');
+    return;
+  }
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Čuvam... ⏳';
+  }
   try {
     const res = await fetch('/api/date-plans', {
       method: 'POST',
@@ -408,14 +426,37 @@ async function savePlanToDb() {
       })
     });
     const data = await res.json();
+    const alertDiv = document.getElementById('savePlanAlert');
     if (res.ok && data.success) {
-      const alertDiv = document.getElementById('savePlanAlert');
-      alertDiv.textContent = 'Plan je sačuvan u našoj bazi podataka! 💖';
-      alertDiv.style.display = 'block';
-      setTimeout(() => { alertDiv.style.display = 'none'; }, 4000);
+      isPlanSaved = true;
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💌 Pogledaj u Planovi';
+        saveBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+      }
+      if (alertDiv) {
+        alertDiv.textContent = 'Plan je sačuvan! Klikni na dugme iznad da otvoriš Planove 💌';
+        alertDiv.style.display = 'block';
+        alertDiv.style.color = '#059669';
+        setTimeout(() => { alertDiv.style.display = 'none'; }, 4000);
+      }
+    } else {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💖 Sačuvaj u našu bazu';
+      }
+      if (alertDiv) {
+        alertDiv.textContent = data.error || 'Greška pri čuvanju u bazi.';
+        alertDiv.style.display = 'block';
+        alertDiv.style.color = '#ef4444';
+      }
     }
   } catch (err) {
     console.error('Error saving plan:', err);
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = '💖 Sačuvaj u našu bazu';
+    }
   }
 }
 

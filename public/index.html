@@ -31,7 +31,6 @@
     </div>
     <nav class="nav-links">
       <button class="nav-btn active" data-tab="proposal">💕 Date</button>
-      <button class="nav-btn" data-tab="puzzle">🧩 Slagalica</button>
       <button class="nav-btn" data-tab="gallery">📸 Uspomene</button>
       <button class="nav-btn" data-tab="plans">💌 Planovi</button>
     </nav>
@@ -226,6 +225,7 @@
         </div>
 
         <div class="puzzle-controls-bar">
+          <button class="btn btn-secondary btn-sm" onclick="switchTab('gallery')">⬅️ Nazad na Uspomene</button>
           <div class="stat-badge">⏱️ <span id="puzzleTimer">00:00</span></div>
           <div class="stat-badge">🔀 Potezi: <span id="puzzleMoves">0</span></div>
           <div class="stat-badge">✅ <span id="puzzlePlaced">0/64</span></div>

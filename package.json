@@ -4,7 +4,8 @@
   "description": "Cute Date Planner & Daily Memory Puzzle in Serbian for Vanja & Andrija",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "reset-db": "node reset-db.js"
   },
   "dependencies": {
     "cookie-parser": "^1.4.6",
